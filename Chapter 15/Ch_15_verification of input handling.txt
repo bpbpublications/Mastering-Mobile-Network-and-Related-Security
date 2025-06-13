@@ -1,0 +1,22 @@
+#verification of input handling
+
+def test_input_validation():
+    test_payloads = [
+        {
+            "name": "SQL Injection Test",
+            "payload": "'; DROP TABLE users; --",
+            "expected_status": 400
+        },
+        {
+            "name": "Command Injection Test",
+            "payload": "$(rm -rf /)",
+            "expected_status": 400
+        }
+    ]
+    
+    for test in test_payloads:
+        response = send_management_request(
+            payload=test["payload"]
+        )
+        assert response.status_code == test["expected_status"]
+        assert verify_error_handling(response)

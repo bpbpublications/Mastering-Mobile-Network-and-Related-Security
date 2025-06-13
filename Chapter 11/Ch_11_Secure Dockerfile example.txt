@@ -1,0 +1,44 @@
+#Secure Dockerfile example. Base image security - Pin specific version and use minimal base
+
+FROM ubuntu:22.04@sha256:abc123... AS build
+
+# Set security-related build arguments
+ARG USERNAME=appuser
+ARG USER_UID=10001
+ARG USER_GID=$USER_UID
+
+# Install security updates and required packages
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && chmod 755 /home/$USERNAME
+
+# Set working directory and copy application files
+WORKDIR /app
+COPY --chown=$USERNAME:$USERNAME . .
+
+# Build application with security flags
+RUN go build -ldflags="-w -s" -o main
+
+# Multi-stage build for minimal final image
+FROM gcr.io/distroless/static-debian11
+
+# Copy only necessary files from build stage
+COPY --from=build /app/main /
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Use non-root user
+USER nonroot:nonroot
+
+# Define health check
+HEALTHCHECK --interval=30s --timeout=3s \
+    CMD ["/main", "health"]
+
+# Use exec form of ENTRYPOINT
+ENTRYPOINT ["/main"]

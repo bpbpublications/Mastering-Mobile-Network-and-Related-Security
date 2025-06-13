@@ -1,0 +1,29 @@
+##Example Kubernetes resource limits for 5G network functions
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: amf-service
+  labels:
+    app: 5g-core
+    function: amf
+spec:
+  containers:
+  - name: amf-container
+    image: 5gcore/amf:latest
+    resources:
+      requests:
+        memory: "4Gi"
+        cpu: "2"
+      limits:
+        memory: "8Gi"
+        cpu: "4"
+        hugepages-2Mi: "1Gi"
+    volumeMounts:
+    - mountPath: /dev/hugepages
+      name: hugepage
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages-2Mi
+

@@ -1,0 +1,21 @@
+#Network Function authentication policy
+
+apiVersion: authentication.k8s.io/v1
+kind: Policy
+metadata:
+  name: 5g-core-auth-policy
+  namespace: 5g-core
+spec:
+  rules:
+  - resources:
+    - secrets
+    operations:
+    - CREATE
+    - UPDATE
+    providers:
+    - name: vault-provider
+      vault:
+        roles:
+        - "5g-core-role"
+        policies:
+        - "5g-secrets-policy"

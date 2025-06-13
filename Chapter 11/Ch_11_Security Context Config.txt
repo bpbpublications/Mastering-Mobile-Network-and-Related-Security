@@ -1,0 +1,32 @@
+##Custom Security Context Constraints for 5G Core Functions
+
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: 5g-core-scc
+  annotations:
+    kubernetes.io/description: "Custom SCC for 5G Core Network Functions"
+allowPrivilegedContainer: false
+runAsUser:
+  type: MustRunAs
+  uid: 1000
+seLinuxContext:
+  type: MustRunAs
+  seLinuxOptions:
+    level: "s0:c123,c456"
+fsGroup:
+  type: MustRunAs
+  ranges:
+  - min: 2000
+    max: 2100
+allowedCapabilities:
+  - "NET_ADMIN"
+  - "NET_RAW"
+defaultAddCapabilities: []
+requiredDropCapabilities:
+  - "ALL"
+volumes:
+  - configMap
+  - secret
+  - emptyDir
+  - persistentVolumeClaim

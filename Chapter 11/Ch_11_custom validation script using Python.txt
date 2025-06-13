@@ -1,0 +1,59 @@
+# Example of a custom validation script using Python
+import yaml
+import sys
+
+def validate_security_context(pod_spec):
+    containers = pod_spec.get('containers', [])
+    for container in containers:
+        security_context = container.get('securityContext', {})
+        
+        # Validate security settings
+        if security_context.get('privileged', False):
+            return False, "Privileged containers are not allowed"
+            
+        if security_context.get('allowPrivilegeEscalation', True):
+            return False, "Privilege escalation must be disabled"
+            
+        if not security_context.get('readOnlyRootFilesystem', False):
+            return False, "Root filesystem must be read-only"
+    
+    pod_security_context = pod_spec.get('securityContext', {})
+    if not pod_security_context.get('runAsNonRoot', False):
+        return False, "Pods must run as non-root"
+    
+    return True, "Security context validation passed"
+
+def validate_resources(pod_spec):
+    containers = pod_spec.get('containers', [])
+    for container in containers:
+        resources = container.get('resources', {})
+        if not resources:
+            return False, "Resource limits must be specified"
+            
+        limits = resources.get('limits', {})
+        if not ('memory' in limits and 'cpu' in limits):
+            return False, "Memory and CPU limits must be specified"
+    
+    return True, "Resource validation passed"
+
+def main():
+    with open(sys.argv[1], 'r') as f:
+        pod_manifest = yaml.safe_load(f)
+    
+    # Run validations
+    security_valid, security_msg = validate_security_context(pod_manifest['spec'])
+    resources_valid, resources_msg = validate_resources(pod_manifest['spec'])
+    
+    if not all([security_valid, resources_valid]):
+        print("Validation failed:")
+        if not security_valid:
+            print(f"Security context: {security_msg}")
+        if not resources_valid:
+            print(f"Resources: {resources_msg}")
+        sys.exit(1)
+    
+    print("All validations passed")
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()

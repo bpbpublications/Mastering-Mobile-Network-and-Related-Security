@@ -1,0 +1,37 @@
+# SMF based Network Policies
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: smf-network-policy
+  namespace: 5gcore
+spec:
+  podSelector:
+    matchLabels:
+      app: smf
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: amf
+    ports:
+    - protocol: TCP
+      port: 29502  # N11 interface
+  - from:
+    - podSelector:
+        matchLabels:
+          app: upf
+    ports:
+    - protocol: TCP
+      port: 29503  # N4 interface
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: upf
+    ports:
+    - protocol: TCP
+      port: 29503  # N4 interface

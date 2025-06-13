@@ -1,0 +1,39 @@
+##Inter-function Communication Rules for 5G Core
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: cross-function-policy
+  namespace: 5g-core
+spec:
+  podSelector:
+    matchLabels:
+      app: upf
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          purpose: 5g-core
+      podSelector:
+        matchLabels:
+          type: control-plane
+    ports:
+    - protocol: UDP
+      port: 2152  # GPRS Tunneling Protocol (GTP)
+    - protocol: TCP
+      port: 8805  # Packet Forwarding Control Protocol
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          purpose: external-network
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+    - protocol: UDP
+      port: 53

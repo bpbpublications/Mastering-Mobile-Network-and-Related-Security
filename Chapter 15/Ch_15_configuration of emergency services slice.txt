@@ -1,0 +1,33 @@
+#Sample configuration of emergency services slice:
+
+slice-config eMBB-priority
+  slice-id 1
+  isolation-level strict
+  qos-profile ultra-reliable
+  security-policy {
+    encryption aes-256-gcm
+    integrity-protection required
+    replay-protection window 32
+  }
+  resource-reservation {
+    cpu-quota 40%
+    memory-guaranteed true
+    bandwidth-minimum 1Gbps
+  }
+
+Shown in the following is a sample configuration of Mobile Broadband Slice:
+slice-config eMBB-standard
+  slice-id 2
+  isolation-level standard
+  qos-profile balanced
+  security-policy {
+    encryption aes-128-gcm
+    integrity-protection optional
+    replay-protection window 64
+  }
+  resource-reservation {
+    cpu-quota 30%
+    memory-guaranteed false
+    bandwidth-minimum 100Mbps
+  }
+

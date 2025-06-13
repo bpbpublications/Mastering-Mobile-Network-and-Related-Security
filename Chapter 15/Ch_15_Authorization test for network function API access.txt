@@ -1,0 +1,27 @@
+# Authorization test for network function API access
+
+def test_nf_authorization():
+    # Configure test case parameters
+    test_cases = [
+        {
+            "nf_type": "AMF",
+            "target_api": "subscriber_data",
+            "expected_access": False
+        },
+        {
+            "nf_type": "UDM",
+            "target_api": "subscriber_data",
+            "expected_access": True
+        }
+    ]
+    
+    for test_case in test_cases:
+        response = request_api_access(
+            nf_type=test_case["nf_type"],
+            api=test_case["target_api"]
+        )
+        
+        if test_case["expected_access"]:
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 403

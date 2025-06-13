@@ -1,0 +1,33 @@
+# Network Slice Specific Policies
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: urllc-slice-policy
+  namespace: 5gcore-urllc
+spec:
+  podSelector:
+    matchLabels:
+      slice: urllc
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: 5gcore
+      podSelector:
+        matchLabels:
+          app: upf-urllc
+    ports:
+    - protocol: UDP
+      port: 2152  # GTP-U port
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: edge-compute
+    ports:
+    - protocol: TCP
+      port: 443  # Secure communication with edge applications

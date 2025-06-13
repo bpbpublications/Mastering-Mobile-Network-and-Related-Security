@@ -1,0 +1,27 @@
+# Security Zone Policies
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: control-plane-zone-policy
+  namespace: 5gcore
+spec:
+  podSelector:
+    matchLabels:
+      zone: control-plane
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          zone: control-plane
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090  # Metrics port

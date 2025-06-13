@@ -1,0 +1,38 @@
+## Network Policy for AMF isolation
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: amf-network-policy
+  namespace: 5g-core
+spec:
+  podSelector:
+    matchLabels:
+      app: amf
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: smf
+    ports:
+    - protocol: TCP
+      port: 38412
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nrf
+    ports:
+    - protocol: TCP
+      port: 29518
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: nrf
+    ports:
+    - protocol: TCP
+      port: 29510
+

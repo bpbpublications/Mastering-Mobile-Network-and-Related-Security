@@ -1,0 +1,32 @@
+##Example Kubernetes resource limits for 5G network functions
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: upf-service
+  labels:
+    app: 5g-core
+    function: upf
+spec:
+  containers:
+  - name: upf-container
+    image: 5gcore/upf:latest
+    resources:
+      requests:
+        memory: "16Gi"
+        cpu: "4"
+      limits:
+        memory: "32Gi"
+        cpu: "8"
+        hugepages-1Gi: "8Gi"
+    volumeMounts:
+    - mountPath: /dev/hugepages
+      name: hugepage
+    securityContext:
+      capabilities:
+        add: ["NET_ADMIN", "SYS_ADMIN"]
+  volumes:
+  - name: hugepage
+    emptyDir:
+      medium: HugePages-1Gi
+

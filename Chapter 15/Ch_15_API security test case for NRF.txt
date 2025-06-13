@@ -1,0 +1,20 @@
+# Example API security test case for NRF authentication
+def test_nrf_authentication():
+    # Test case: Unauthorized NF registration attempt
+    test_payload = {
+        "nfInstanceId": "b9e6e2cb-5ce8-4cb6-9173-a266dd9a2f0c",
+        "nfType": "AMF",
+        "nfStatus": "REGISTERED"
+    }
+    
+    response = send_registration_request(
+        endpoint="/nrf-nfm/v1/nf-instances",
+        payload=test_payload,
+        auth_token=None  # Attempting without authentication
+    )
+    
+    assert response.status_code == 401
+    assert verify_error_headers(response.headers)
+    assert verify_audit_log_entry(
+        "Unauthorized NF registration attempt detected"
+    )

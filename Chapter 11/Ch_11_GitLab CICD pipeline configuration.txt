@@ -1,0 +1,67 @@
+#Example GitLab CI/CD pipeline configuration for secure container builds
+
+variables:
+  DOCKER_CONTENT_TRUST: "1"
+  DOCKER_TLS_CERTDIR: "/certs"
+  SCANNER_VERSION: "latest"
+  TRIVY_VERSION: "0.24.0"
+  SECURE_LOG_LEVEL: "debug"
+
+stages:
+  - code-analysis
+  - build
+  - security-scan
+  - sign
+  - deploy
+
+sast:
+  stage: code-analysis
+  script:
+    - semgrep ci --config "p/owasp-top-ten" --config "p/cwe-top-25"
+    # Enable specific rules for 5G components
+    - semgrep ci --config "p/network-security"
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+
+dependency-check:
+  stage: code-analysis
+  script:
+    - dependency-check --project "5g-container" --scan . --format JSON
+    # Additional checks for known 5G vulnerabilities
+    - dependency-check --suppression suppress-5g.xml
+  artifacts:
+    reports:
+      dependency: dependency-report.json
+
+container-build:
+  stage: build
+  script:
+    # Use multi-stage builds to minimize attack surface
+    - |
+      cat > Dockerfile << EOF
+      FROM golang:1.21-alpine AS builder
+      WORKDIR /app
+      COPY . .
+      RUN go mod verify
+      RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+
+      FROM gcr.io/distroless/static-debian11
+      COPY --from=builder /app/main /
+      USER nonroot:nonroot
+      ENTRYPOINT ["/main"]
+      EOF
+    - docker build --no-cache -t ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA} .
+
+trivy-scan:
+  stage: security-scan
+  script:
+    - trivy image --severity HIGH,CRITICAL ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
+    # Custom policies for 5G-specific security requirements
+    - trivy conf --policy "./5g-policies/" .
+
+cosign-sign:
+  stage: sign
+  script:
+    - cosign sign --key ${COSIGN_KEY} ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}
+    - cosign verify --key ${COSIGN_PUBLIC_KEY} ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}

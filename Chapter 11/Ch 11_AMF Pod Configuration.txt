@@ -1,0 +1,31 @@
+###AMF (Access and Mobility Management Function) Pod Configuratin
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: amf-function
+  namespace: 5g-core
+spec:
+  containers:
+  - name: amf-container
+    image: 5gcore/amf:latest
+    securityContext:
+      privileged: false
+      capabilities:
+        drop: ["ALL"]
+        add: ["NET_ADMIN", "NET_RAW"]
+    resources:
+      limits:
+        memory: "4Gi"
+        cpu: "2"
+      requests:
+        memory: "2Gi"
+        cpu: "1"
+    volumeMounts:
+    - name: amf-config
+      mountPath: /etc/amf/config
+      readOnly: true
+  volumes:
+  - name: amf-config
+    configMap:
+      name: amf-configuration
